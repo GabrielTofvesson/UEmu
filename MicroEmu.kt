@@ -119,7 +119,7 @@ class MachineState {
                 flag_Z = result == 0.toShort()
                 flag_N = result < 0
                 flag_C = result <= registers.ar
-                flag_O = result.getBitAt(6) != registers.ar.getBitAt(6)
+                flag_O = (result.getBitAt(7) == bus_to.getBitAt(7)) && (registers.ar.getBitAt(7) != result.getBitAt(7))
                 result
             }
             5 ->{
