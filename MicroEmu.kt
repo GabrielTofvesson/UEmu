@@ -64,13 +64,13 @@ class MachineState {
                     2 -> newRegs.gr2 = bus_to
                     else -> newRegs.gr3 = bus_to
                 }
-                else -> newRegs.asr = bus_to.toProperType(newRegs.asr)
+                7 -> newRegs.asr = bus_to.toProperType(newRegs.asr)
             }
 
             if(instr_P) newRegs.pc = (registers.pc + 1).toByte()
 
             when(instr_LC){
-                1 -> newRegs.lc = (registers.lc + 1).toByte()
+                1 -> newRegs.lc = (registers.lc - 1).toByte()
                 2 -> newRegs.lc = bus_to.onlyBits(8).toByte()
                 3 -> newRegs.lc = instr.onlyBits(8).toByte() 
             }
@@ -196,6 +196,8 @@ class MachineState {
             }
         }
 
+        flag_L = newRegs.lc == 0.toByte()
+
         registers = newRegs
     }
 
@@ -232,7 +234,7 @@ class MachineState {
         fun copy() = Registers(pc, asr, ar, hr, gr0, gr1, gr2, gr3, ir, uPC, uSP, lc)
     }
 
-    // Stolen from my (as of yet unpublished) (u)code weaver
+    // Stolen from my (as of yet unpublished) (u)code state weaver
     companion object {
         fun parseState(rawState: String): MachineState {
             val state = MachineState()
@@ -284,7 +286,6 @@ fun Byte.toIndexValue() = toInt() and 0xFF
 fun Int.getBitAt(index: Int) = ushr(index).and(1) == 1
 fun Short.getBitAt(index: Int) = toInt().ushr(index).and(1) == 1
 infix fun Int.onlyBits(bits: Int) = and(-1 ushr (32 - bits))
-
 
 fun main(args: Array<String>){
     val state = if(args.size > 0){
