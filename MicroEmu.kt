@@ -231,6 +231,46 @@ class MachineState {
     ){
         fun copy() = Registers(pc, asr, ar, hr, gr0, gr1, gr2, gr3, ir, uPC, uSP, lc)
     }
+
+    // Stolen from my (as of yet unpublished) (u)code weaver
+    companion object {
+        fun parseState(rawState: String): MachineState {
+            val state = MachineState()
+            val lines = rawState.replace("\r", "").split("\n").toTypedArray()
+
+            // Read PM
+            for(index in 0 until 256)
+                state.programMemory[index] = Integer.parseInt(lines[index + 1].substring(4), 16).toShort()
+
+            // Read MyM
+            for(index in 0 until 128)
+                state.microMemory[index] = Integer.parseInt(lines[index + 3 + 256].substring(4), 16)
+            
+            // Read K1
+            for(index in 0 until 16)
+                state.k1[index] = Integer.parseInt(lines[index + 5 + 256 + 128].substring(4), 16).toByte()
+
+            // Read K2
+            for(index in 0 until 4)
+                state.k2[index] = Integer.parseInt(lines[index + 7 + 256 + 128 + 16].substring(4), 16).toByte()
+            
+            state.registers.pc = Integer.parseInt(lines[413], 16).toByte()
+            state.registers.asr = Integer.parseInt(lines[416], 16).toByte()
+            state.registers.ar = Integer.parseInt(lines[419], 16).toShort()
+            state.registers.hr = Integer.parseInt(lines[422], 16).toShort()
+            state.registers.gr0 = Integer.parseInt(lines[425], 16).toShort()
+            state.registers.gr1 = Integer.parseInt(lines[428], 16).toShort()
+            state.registers.gr2 = Integer.parseInt(lines[431], 16).toShort()
+            state.registers.gr3 = Integer.parseInt(lines[434], 16).toShort()
+            state.registers.ir = Integer.parseInt(lines[437].substring(1), 2).toShort()
+            state.registers.uPC = Integer.parseInt(lines[440], 16).toByte()
+            state.registers.uSP = Integer.parseInt(lines[443], 16).toByte()
+            state.registers.lc = Integer.parseInt(lines[446], 16).toByte()
+
+            return state
+        }
+    }
+
 }
 
 fun Short.inv() = toInt().inv().onlyBits(16).toShort()
@@ -247,8 +287,22 @@ infix fun Int.onlyBits(bits: Int) = and(-1 ushr (32 - bits))
 
 
 fun main(args: Array<String>){
-    val state = MachineState()
-    state.microMemory[0] = 0x2780
+    val state = if(args.size > 0){
+        val file = java.io.File(args[0])
+        if(!file.isFile){
+            System.err.println("Not a file :(")
+            System.exit(1)
+        }
+        try{
+            MachineState.parseState(file.readText())
+        }catch(e: NumberFormatException){
+            System.err.println("Bad file format :(")
+            System.exit(2)
+            null
+        }
+    }else MachineState()
+
+    state!!
 
     state.step()
 
