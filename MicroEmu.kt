@@ -305,8 +305,36 @@ fun main(args: Array<String>){
 
     state!!
 
-    state.step()
+    val scanner = java.util.Scanner(System.`in`)
 
-    println(state.registers.pc)
-    println(state.halted)
+    val escape: Char = 0x1B.toChar()
+    
+    print("$escape[2J")
+    System.out.flush()
+
+    while(!state.halted){
+        
+        print("$escape[1;1H")
+        System.out.flush()
+
+        println("REGISTERS:")
+        for(field in state.registers::class.java.declaredFields){
+            field.isAccessible = true
+            if(field.isSynthetic) continue
+            println("${field.name.toUpperCase()}:\t0x${field.get(state.registers).asShortHex()}")
+        }
+        state.step()
+        println("\nPress [RETURN] to step once...")
+        scanner.nextLine()
+    }
+}
+
+fun Any?.asShortHex(): String {
+    if(this == null) return "null"
+    val num = if(this is Int) this
+                else if(this is Short) this.toInt().and(0xFFFF)
+                else if(this is Byte) this.toInt().and(0xFF)
+                else null
+    if(num == null) return this.toString()
+    return num.toLong().or(1 shl 62).toString(16).substring(6, 8)
 }
