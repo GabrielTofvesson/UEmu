@@ -12,7 +12,6 @@ class MachineState {
     var cycleCount: Long = 0
     var halted: Boolean = false
 
-
     fun step(){
         if(halted) return
         ++cycleCount
@@ -272,7 +271,6 @@ class MachineState {
             return state
         }
     }
-
 }
 
 fun Short.inv() = toInt().inv().onlyBits(16).toShort()
